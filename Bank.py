@@ -27,19 +27,23 @@ class Bank:
                 print("Passwords do not match. Please try again.")
             pass_hash = PasswordHasher().hash(pw)
             del pw
-            cur.execute("INSERT INTO c4mainv1(uid, pass_hash, user_role)"
-                        " VALUES (?, ?, ?)", (1, pass_hash, "admin"))
+            cur.execute("INSERT INTO c4mainv1(uid, f_name, pass_hash, user_role)"
+                        " VALUES (?, ?, ?, ?)", (1, "Admin", pass_hash, "admin"))
             con.commit()
             cur.close()
 
         #create connection
         self.con = sqlite3.connect("main.db")
         self.cur = self.con.cursor()
+        #role for determining whether permission granted, set upon login
+        self.role = ""
+        self.name = ""
+        self.acc = None
 
         #check if the database is official
-        a = self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='c4mainv1'").fetchall()
+        a = self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='c4mainv1'").fetchone()
         print(a)
-        if a != [('c4mainv1',)]:
+        if a != ('c4mainv1',):
             self.cur.close()
             raise Exception("There is no table called c4mainv1, has the database been produced by the program?")
     def register(self):
@@ -72,15 +76,26 @@ class Bank:
                "balance, user_role)"
                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
         args = (uid, f_name, l_name, address, dob, pass_hash, balance, "user")
+        print(f"You are now registered as account number {uid}")
         self.cur.execute(sql, args)
         self.con.commit()
-        print("success!!!!!")
-        print(self.cur.execute(f"SELECT * FROM c4mainv1 WHERE uid={uid}").fetchall())
     def login(self):
-        uid = (int(input("Enter your account number: ")),)
-        pass_hash = self.cur.execute("SELECT PASS_HASH FROM c4mainv1 WHERE uid=?", uid).fetchone()[0]
+        try:
+            self.acc = int(input("Enter your account number: "))
+            pass_hash = self.cur.execute("SELECT pass_hash FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+        except:
+            print("Account does not exist.")
+            return False
         pw = getpass(prompt="Enter your password: ")
         try:
-            print(PasswordHasher().verify(pass_hash, pw))
+            if PasswordHasher().verify(pass_hash, pw):
+                del pass_hash, pw
+                self.name = self.cur.execute("SELECT f_name FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+                self.role = self.cur.execute("SELECT user_role FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+                return True
         except argon2.exceptions.VerifyMismatchError:
-            print(False)
+            print("Incorrect password.")
+            return False
+
+    def edit(self):
+        return
