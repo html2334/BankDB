@@ -152,12 +152,36 @@ class Bank:
 
 
     def pay(self):
-        """target = input("Target account: ")
+        try:
+            target = int(input("Select target account: "))
+            a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
+            if a is None:
+                print("Account does not exist.")
+                return
+        except ValueError:
+            print("Invalid account.")
+            return
         a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
         if a is None:
             print("Account does not exist.")
-            return"""
-        pass
+            return
+        try:
+            bal = self.cur.execute("SELECT balance FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            a = float(input("How much money to transfer? (no $ sign): "))
+            if bal - a >= 0 and a > 0:
+                self.cur.execute("UPDATE c4mainv1 SET balance = "
+                                 "? WHERE uid = ?", (bal - a, self.acc))
+                bal = self.cur.execute("SELECT balance FROM c4mainv1 WHERE uid=?", (target,)).fetchone()[0]
+                self.cur.execute("UPDATE c4mainv1 SET balance = ?"
+                                 "WHERE uid = ?", (bal + a, target))
+                self.con.commit()
+                print(f"Money successfully transferred to {target}")
+            elif a <= 0:
+                print("You must transfer a positive amount of money.")
+            else:
+                print("Not enough balance.")
+        except ValueError:
+            print("Invalid value.")
 
     def borrow(self):
         pass
@@ -166,4 +190,14 @@ class Bank:
         pass
 
     def increase_loan(self):
+        """try:
+            target = int(input("Select target account: "))
+            a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
+            if a is None:
+                print("Account does not exist.")
+                return
+        except ValueError:
+            print("Invalid account.")
+            return
+        """
         pass
