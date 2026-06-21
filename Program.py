@@ -21,14 +21,18 @@ class Program:
                 case "help":
                     if bank.role == "user":
                         print("""You may run the commands:
-                        balance
+                        bal/balance
                         pay
                         borrow
                         pay_back
+                        debt
                         logout/exit""")
                     else:
                         print("Consult README or internal documents for"
                               "full list of commands")
+                case "bal":
+                    if bank.role != "admin":
+                        bank.balance()
                 case "balance":
                     if bank.role != "admin":
                         bank.balance()
@@ -51,6 +55,9 @@ class Program:
                         print("Invalid command.")
                     else:
                         bank.increase_loan()
+                case "debt":
+                    if bank.role != "admin":
+                        bank.debt()
                 case "logout":
                     print(f"Logged out of account {bank.acc}")
                     break

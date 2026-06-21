@@ -119,7 +119,7 @@ class Bank:
             "pass_hash": str,
             "balance": float,
             "debt": float,
-            "max_loan": float,
+            "max_loan": int,
             "user_role": str,
         }
         print("""List of columns: {
@@ -181,16 +181,46 @@ class Bank:
             else:
                 print("Not enough balance.")
         except ValueError:
-            print("Invalid value.")
+            print("Invalid number.")
 
     def borrow(self):
-        pass
+        try:
+            loan = self.cur.execute("SELECT max_loan FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            debt = self.cur.execute("SELECT debt FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            bal = self.cur.execute("SELECT balance FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            a = float(input("How much to borrow? (no $ sign) "))
+            if debt + a <= loan and a > 0:
+                self.cur.execute("UPDATE c4mainv1 SET debt = "
+                                 "? WHERE uid = ?", (debt + a, self.acc))
+                self.cur.execute("UPDATE c4mainv1 SET balance = "
+                                 "? WHERE uid = ?", (bal + a, self.acc))
+            elif a <= 0:
+                print("You can only borrow a positive number.")
+            else:
+                print("You cannot borrow more than your maximum loan.")
+        except ValueError:
+            print("Invalid number.")
 
     def pay_back(self):
-        pass
+        try:
+            debt = self.cur.execute("SELECT debt FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            bal = self.cur.execute("SELECT balance FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+            a = float(input("How much to pay back? (no $ sign) "))
+            if debt - a >= 0 and a > 0:
+                self.cur.execute("UPDATE c4mainv1 SET debt = "
+                                 "? WHERE uid = ?", (debt - a, self.acc))
+                self.cur.execute("UPDATE c4mainv1 SET balance = "
+                                 "? WHERE uid = ?", (bal - a, self.acc))
+                print("Debt successfully paid.")
+            elif a <= 0:
+                print("You must pay back a positive number.")
+            else:
+                print("You cannot pay more than you owe.")
+        except ValueError:
+            print("Invalid number.")
 
     def increase_loan(self):
-        """try:
+        try:
             target = int(input("Select target account: "))
             a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
             if a is None:
@@ -199,5 +229,15 @@ class Bank:
         except ValueError:
             print("Invalid account.")
             return
-        """
-        pass
+        try:
+            loan = float(input("What should the new maximum loan be? (no $ sign) "))
+            self.cur.execute("UPDATE c4mainv1 SET max_loan = ? "
+                             "WHERE uid = ?", (loan, target))
+            self.con.commit()
+            print("Maximum loan successfully updated.")
+        except ValueError:
+            print("Invalid number.")
+
+    def debt(self):
+        debt = self.cur.execute("SELECT debt FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+        print(f"You owe ${debt}")
