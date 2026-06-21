@@ -19,7 +19,7 @@ class Bank:
             con = sqlite3.connect("main.db")
             cur = con.cursor()
             cur.execute("CREATE TABLE c4mainv1(uid, f_name, l_name, balance, "
-                        "credit, address, dob, pass_hash, user_role)")
+                        "debt, max_loan, address, dob, pass_hash, user_role)")
             while True:
                 pw = getpass(prompt='Set an admin password: ')
                 if pw == getpass(prompt='Confirm password: '):
@@ -72,10 +72,13 @@ class Bank:
         pass_hash = PasswordHasher().hash(pw)
         del pw
         balance = 0
+        debt = 0
+        max_loan = 500
         sql = ("INSERT INTO c4mainv1 (uid, f_name, l_name, address, dob, pass_hash, "
-               "balance, user_role)"
-               " VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-        args = (uid, f_name, l_name, address, dob, pass_hash, balance, "user")
+               "balance, debt, max_loan, user_role)"
+               " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        args = (uid, f_name, l_name, address,
+                dob, pass_hash, balance, debt, max_loan, "user")
         print(f"You are now registered as account number {uid}")
         self.cur.execute(sql, args)
         self.con.commit()
@@ -98,4 +101,69 @@ class Bank:
             return False
 
     def edit(self):
-        return
+        try:
+            target = int(input("Select target account: "))
+            a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
+            if a is None:
+                print("Account does not exist.")
+                return
+        except ValueError:
+            print("Invalid account.")
+            return
+        a = {
+            "uid": int,
+            "f_name": str,
+            "l_name": str,
+            "address": str,
+            "dob": str,
+            "pass_hash": str,
+            "balance": float,
+            "debt": float,
+            "max_loan": float,
+            "user_role": str,
+        }
+        print("""List of columns: {
+            "uid": int,
+            "f_name": str,
+            "l_name": str,
+            "address": str,
+            "dob": str,
+            "pass_hash": str,
+            "balance": float,
+            "debt": float,
+            "max_loan": float,
+            "user_role": str,
+        }""")
+
+        b = input("Select a column: ")
+        if b in a:
+            c = a[b](input("Insert new value: "))
+            #yes it's using f strings, but it's validated so should be fine
+            self.cur.execute(f"UPDATE c4mainv1 SET {b} = ? WHERE uid = ?",
+                             (c, target))
+            self.con.commit()
+            print("Target successfully updated.")
+        else:
+            print("Invalid column.")
+
+    def balance(self):
+        bal = self.cur.execute("SELECT balance FROM c4mainv1 WHERE uid=?", (self.acc,)).fetchone()[0]
+        print(f"You have ${bal} in your account.")
+
+
+    def pay(self):
+        """target = input("Target account: ")
+        a = self.cur.execute("SELECT 1 FROM c4mainv1 WHERE uid = ?", (target,)).fetchone()
+        if a is None:
+            print("Account does not exist.")
+            return"""
+        pass
+
+    def borrow(self):
+        pass
+
+    def pay_back(self):
+        pass
+
+    def increase_loan(self):
+        pass
