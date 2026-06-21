@@ -194,6 +194,7 @@ class Bank:
                                  "? WHERE uid = ?", (debt + a, self.acc))
                 self.cur.execute("UPDATE c4mainv1 SET balance = "
                                  "? WHERE uid = ?", (bal + a, self.acc))
+                print("Money succesfully borrowed.")
             elif a <= 0:
                 print("You can only borrow a positive number.")
             else:
