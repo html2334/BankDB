@@ -16,7 +16,8 @@ class Bank:
             if input("No database found, create new? (Y/N): ").upper() != "Y":
                 raise Exception("Database not created.")
             open("main.db", "x")
-            cur = sqlite3.connect("main.db").cursor()
+            con = sqlite3.connect("main.db")
+            cur = con.cursor()
             cur.execute("CREATE TABLE c4mainv1(uid, f_name, l_name, balance, "
                         "credit, address, dob, pass_hash, user_role)")
             while True:
@@ -28,6 +29,7 @@ class Bank:
             del pw
             cur.execute("INSERT INTO c4mainv1(uid, pass_hash, user_role)"
                         " VALUES (?, ?, ?)", (1, pass_hash, "admin"))
+            con.commit()
             cur.close()
 
         #create connection
